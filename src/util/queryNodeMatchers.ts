@@ -1,3 +1,4 @@
+import { has } from "lodash";
 import { Position, Range, Selection } from "vscode";
 import { SyntaxNode, Query, QueryCapture, Point, Tree } from "web-tree-sitter";
 import {
@@ -10,8 +11,6 @@ import {
   makeRangeFromPositions,
   simpleSelectionExtractor,
 } from "./nodeSelectors";
-
-let query: Query;
 
 /**
  *
@@ -28,19 +27,36 @@ export function defaultMatcher(
   scopeQuery: string,
   selector: SelectionExtractor = simpleSelectionExtractor
 ): NodeMatcher {
+  let query: Query | null = null;
+  let scopeTypeIdentifier = `${scopeType}.identifier`;
+  // memoize
+  let hasIdentifier = !!scopeQuery.match(scopeTypeIdentifier);
+
   return (
     selection: SelectionWithEditor,
     treeSitterHook: Tree | SyntaxNode,
     siblings: boolean = false
   ): NodeMatcherValue[] | null => {
     const tree = treeSitterHook as Tree;
-    const query = getQuery(tree, scopeQuery);
-    const rawCaptures = getCapture(selection, tree.rootNode, query, scopeType);
+    query = getQuery(tree, scopeQuery, query);
+    const rawCaptures = getCapture(
+      selection,
+      tree.rootNode,
+      query,
+      scopeType,
+      hasIdentifier,
+      scopeTypeIdentifier
+    );
 
     if (!rawCaptures || rawCaptures.length === 0) {
       return null;
     }
-    let selectedCaptures = selectCaptureByRange(rawCaptures, selection);
+    let selectedCaptures = selectCaptureByRange(
+      rawCaptures,
+      selection,
+      hasIdentifier,
+      scopeTypeIdentifier
+    );
 
     if (!selectedCaptures) {
       return null;
@@ -118,11 +134,11 @@ function generateCapturesIfSiblingsPresent(
  * @param scopeQuery The scm query file for a given language.
  * @returns Query object
  */
-function getQuery(tree: Tree, scopeQuery: string): Query {
+function getQuery(tree: Tree, scopeQuery: string, query: Query | null): Query {
   if (!query) {
     query = tree.getLanguage().query(scopeQuery);
   }
-  return query;
+  return query!;
 }
 
 /**
@@ -137,7 +153,9 @@ function getCapture(
   selection: SelectionWithEditor,
   root: SyntaxNode,
   query: Query,
-  scopeType: string
+  scopeType: string,
+  hasIdentifier: boolean,
+  scopeTypeIdentifier: string
 ) {
   const startPoint = generatePointFromSelection(selection, "start");
   const endPoint = generatePointFromSelection(selection, "end");
@@ -158,7 +176,10 @@ function getCapture(
     const captures = query
       .captures(root, startPoint, endPoint)
       .filter((capture) => {
-        return capture.name === scopeType;
+        return (
+          capture.name === scopeType ||
+          (hasIdentifier ? capture.name === scopeTypeIdentifier : false)
+        );
       });
     if (captures && captures.length > 0) {
       return captures;
@@ -177,13 +198,17 @@ function getCapture(
  */
 function selectCaptureByRange(
   captures: QueryCapture[],
-  selection: SelectionWithEditor
+  selection: SelectionWithEditor,
+  hasIdentifier: boolean,
+  scopeTypeIdentifier: string
 ): QueryCapture[] | null {
   let isSinglePoint = selection.selection.isEmpty;
 
   let leadingCapture = matchCapturesOnPosition(
     captures,
-    selection.selection.start
+    selection.selection.start,
+    hasIdentifier,
+    scopeTypeIdentifier
   );
 
   if (!leadingCapture) {
@@ -195,7 +220,9 @@ function selectCaptureByRange(
   } else {
     const trailingCapture = matchCapturesOnPosition(
       captures,
-      selection.selection.end
+      selection.selection.end,
+      hasIdentifier,
+      scopeTypeIdentifier
     );
     if (!trailingCapture) {
       return null;
@@ -210,27 +237,52 @@ function selectCaptureByRange(
  * @param position The position to match against.
  * @returns The capture furthest down the tree which contains the position.
  */
-function matchCapturesOnPosition(captures: QueryCapture[], position: Position) {
+function matchCapturesOnPosition(
+  captures: QueryCapture[],
+  position: Position,
+  hasIdentifier: boolean,
+  scopeTypeIdentifier: string
+) {
   let capture;
+  // Ensure we see parent scopes first.
+  captures = captures.sort((a, b) => {
+    if (!hasIdentifier) {
+      return 0;
+    }
+
+    if (a.name === scopeTypeIdentifier) {
+      return 1;
+    } else {
+      return -1;
+    }
+  });
+  let predicate = (captureRange: Range, name: string) => {
+    if (name !== scopeTypeIdentifier) {
+      return captureRange.contains(position);
+    }
+    return true;
+  };
+
   for (const c of captures) {
-    const captureRange: Range = makeRangeFromPositions(
+    const possibleCaptureRange: Range = makeRangeFromPositions(
       c.node.startPosition,
       c.node.endPosition
     );
-    if (captureRange.contains(position)) {
+    if (predicate(possibleCaptureRange, c.name)) {
       if (!capture) {
         capture = c;
       } else {
-        const leadingCaptureRange = makeRangeFromPositions(
+        const captureRange = makeRangeFromPositions(
           capture.node.startPosition,
           capture.node.endPosition
         );
-        if (leadingCaptureRange.contains(captureRange)) {
+        if (captureRange.contains(possibleCaptureRange)) {
           capture = c;
         }
       }
     }
   }
+
   return capture;
 }
 

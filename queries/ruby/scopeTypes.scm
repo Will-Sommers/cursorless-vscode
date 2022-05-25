@@ -3,7 +3,7 @@
 (call) @functionCall
 (method) @namedFunction
 (method
-  name: (_) @functionName)
+  name: (_) @functionName.identifier) @functionName
 (hash) @map
 
 [
@@ -16,13 +16,13 @@
 
 (class) @class
 (class
-  name: (_) @className)
+  name: (_) @className.identifier ) @className
 
 (assignment
-  left: (_) @name)
+  left: (_) @name.identifier) @name
 (operator_assignment
-  left: (_) @name)
+  left: (_) @name.identifier) @name
 (class
-  name: (_) @name)
+  name: (_) @name.identifier) @name
 (method
-  name: (_) @name)
+  name: (_) @name.identifier) @name
