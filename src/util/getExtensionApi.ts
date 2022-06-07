@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ThatMark } from "../core/ThatMark";
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import { Graph } from "../typings/Types";
 
 export interface CursorlessApi {
@@ -15,6 +15,7 @@ export interface CursorlessApi {
 
 export interface ParseTreeApi {
   getNodeAtLocation(location: vscode.Location): SyntaxNode;
+  getTree(document: vscode.TextDocument): Tree;
   loadLanguage: (languageId: string) => Promise<boolean>;
 }
 

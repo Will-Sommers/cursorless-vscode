@@ -1,28 +1,30 @@
-import { SyntaxNode } from "web-tree-sitter";
-import { notSupported } from "../util/nodeMatchers";
-import { selectionWithEditorFromRange } from "../util/selectionUtils";
+import { intersection } from "lodash";
+import { SyntaxNode, Tree } from "web-tree-sitter";
+import { UnsupportedLanguageError } from "../errors";
+import { SimpleScopeTypeType } from "../typings/target.types";
 import {
   NodeMatcher,
   NodeMatcherValue,
   SelectionWithEditor,
 } from "../typings/Types";
-import { SimpleScopeTypeType } from "../typings/targetDescriptor.types";
-import cpp from "./cpp";
+import { notSupported } from "../util/nodeMatchers";
+import { selectionWithEditorFromRange } from "../util/selectionUtils";
 import clojure from "./clojure";
+import { SupportedLanguageId } from "./constants";
+import cpp from "./cpp";
 import csharp from "./csharp";
-import { patternMatchers as json } from "./json";
-import { patternMatchers as typescript } from "./typescript";
-import java from "./java";
+import go from "./go";
 import { patternMatchers as html } from "./html";
+import java from "./java";
+import { patternMatchers as json } from "./json";
+import markdown from "./markdown";
 import php from "./php";
 import python from "./python";
-import markdown from "./markdown";
+import queryBasedSpecification from "./queryBasedSpecification";
+import { patternMatchers as ruby } from "./ruby";
 import scala from "./scala";
 import { patternMatchers as scss } from "./scss";
-import go from "./go";
-import { patternMatchers as ruby } from "./ruby";
-import { UnsupportedLanguageError } from "../errors";
-import { SupportedLanguageId } from "./constants";
+import { patternMatchers as typescript } from "./typescript";
 
 export function getNodeMatcher(
   languageId: string,
@@ -46,6 +48,20 @@ export function getNodeMatcher(
   }
 
   return matcher;
+}
+
+export function getQueryNodeMatcher(
+  languageId: string,
+  scopeTypeType: SimpleScopeTypeType
+): NodeMatcher | null {
+  const matchers = queryBasedMatchers[languageId as SupportedLanguageId];
+
+  if (matchers == null) {
+    // Note: When all nodes are matched using this method, return notSupported.
+    return null;
+  }
+
+  return matchers[scopeTypeType];
 }
 
 const languageMatchers: Record<
@@ -75,11 +91,49 @@ const languageMatchers: Record<
   xml: html,
 };
 
+const queryBasedMatchers: Partial<
+  Record<SupportedLanguageId, Record<SimpleScopeTypeType, NodeMatcher>>
+> = {
+  ruby: queryBasedSpecification("ruby"),
+};
+
+for (const languageId in queryBasedMatchers) {
+  let queryBasedMatcher = queryBasedMatchers[languageId as SupportedLanguageId];
+  if (queryBasedMatcher) {
+    ensureUniqueMatchers(
+      languageMatchers[languageId as SupportedLanguageId],
+      queryBasedMatcher,
+      languageId
+    );
+  }
+}
+
+function ensureUniqueMatchers(
+  regexMatcher: Record<SimpleScopeTypeType, NodeMatcher>,
+  queryBasedMatchers:
+    | Partial<Record<SimpleScopeTypeType, NodeMatcher>>
+    | undefined,
+  languageName: string
+) {
+  const duplicates = intersection(
+    Object.keys(regexMatcher),
+    Object.keys(queryBasedMatchers)
+  );
+  if (duplicates.length > 0) {
+    throw new Error(
+      `ScopeTypes: [${duplicates.join(
+        ", "
+      )}] for ${languageName} defined via both Regex and Query code paths. Please remove duplicates`
+    );
+  }
+}
+
 function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {
   return (
     selection: SelectionWithEditor,
-    node: SyntaxNode
+    treeSitterHook: SyntaxNode | Tree
   ): NodeMatcherValue[] | null => {
+    let node = treeSitterHook as SyntaxNode;
     let matches = matcher(selection, node);
     if (matches == null) {
       return null;

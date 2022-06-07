@@ -1,4 +1,4 @@
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import {
   matcher,
   cascadingMatcher,
@@ -66,7 +66,11 @@ const STATEMENT_TYPES = [
 const getStartTag = patternMatcher("jsx_element.jsx_opening_element!");
 const getEndTag = patternMatcher("jsx_element.jsx_closing_element!");
 
-const getTags = (selection: SelectionWithEditor, node: SyntaxNode) => {
+const getTags = (
+  selection: SelectionWithEditor,
+  treeSitterHook: SyntaxNode | Tree
+) => {
+  const node = treeSitterHook as SyntaxNode;
   const startTag = getStartTag(selection, node);
   const endTag = getEndTag(selection, node);
   return startTag != null && endTag != null ? startTag.concat(endTag) : null;
@@ -74,7 +78,11 @@ const getTags = (selection: SelectionWithEditor, node: SyntaxNode) => {
 
 function typeMatcher(): NodeMatcher {
   const delimiterSelector = selectWithLeadingDelimiter(":");
-  return function (selection: SelectionWithEditor, node: SyntaxNode) {
+  return function (
+    selection: SelectionWithEditor,
+    treeSitterHook: SyntaxNode | Tree
+  ) {
+    const node = treeSitterHook as SyntaxNode;
     if (
       node.parent?.type === "new_expression" &&
       node.type !== "new" &&

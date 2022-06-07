@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ExtensionContext, Location } from "vscode";
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import { ActionRecord } from "../actions/actions.types";
 import Debug from "../core/Debug";
 import Decorations from "../core/Decorations";
@@ -31,6 +31,7 @@ export interface ProcessedTargetsContext {
   thatMark: SelectionWithEditor[];
   sourceMark: SelectionWithEditor[];
   getNodeAtLocation: (location: Location) => SyntaxNode;
+  getTree: (document: vscode.TextDocument) => Tree;
 }
 
 export interface SelectionWithEditor {
@@ -127,6 +128,11 @@ export interface Graph {
   readonly getNodeAtLocation: (location: vscode.Location) => SyntaxNode;
 
   /**
+   * Function to access the tree sitter tree.
+   */
+  readonly getTree: (document: vscode.TextDocument) => Tree;
+
+  /**
    * Debug logger
    */
   readonly debug: Debug;
@@ -146,7 +152,8 @@ export type NodeMatcherAlternative = NodeMatcher | string[] | string;
 
 export type NodeMatcher = (
   selection: SelectionWithEditor,
-  node: SyntaxNode
+  treeSitterHook: SyntaxNode | Tree,
+  siblings?: boolean
 ) => NodeMatcherValue[] | null;
 
 /**

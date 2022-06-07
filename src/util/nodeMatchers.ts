@@ -1,4 +1,4 @@
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import {
   NodeMatcher,
   NodeFinder,
@@ -26,7 +26,11 @@ export function matcher(
   finder: NodeFinder,
   selector: SelectionExtractor = simpleSelectionExtractor
 ): NodeMatcher {
-  return function (selection: SelectionWithEditor, node: SyntaxNode) {
+  return function (
+    selection: SelectionWithEditor,
+    treeSitterHook: SyntaxNode | Tree
+  ) {
+    const node = treeSitterHook as SyntaxNode;
     const targetNode = finder(node, selection.selection);
     return targetNode != null
       ? [
@@ -53,7 +57,11 @@ export function chainedMatcher(
 ): NodeMatcher {
   const nodeFinder = chainedNodeFinder(...finders);
 
-  return function (selection: SelectionWithEditor, initialNode: SyntaxNode) {
+  return function (
+    selection: SelectionWithEditor,
+    treeSitterHook: SyntaxNode | Tree
+  ) {
+    const initialNode = treeSitterHook as SyntaxNode;
     const returnNode = nodeFinder(initialNode);
 
     if (returnNode == null) {
@@ -156,7 +164,11 @@ export function trailingMatcher(
  * @returns A NodeMatcher that tries the given matchers in sequence
  */
 export function cascadingMatcher(...matchers: NodeMatcher[]): NodeMatcher {
-  return (selection: SelectionWithEditor, node: SyntaxNode) => {
+  return (
+    selection: SelectionWithEditor,
+    treeSitterHook: SyntaxNode | Tree
+  ) => {
+    const node = treeSitterHook as SyntaxNode;
     for (const matcher of matchers) {
       const match = matcher(selection, node);
       if (match != null) {
@@ -170,7 +182,7 @@ export function cascadingMatcher(...matchers: NodeMatcher[]): NodeMatcher {
 
 export const notSupported: NodeMatcher = (
   _selection: SelectionWithEditor,
-  _node: SyntaxNode
+  _node: SyntaxNode | Tree
 ) => {
   throw new Error("Node type not supported");
 };

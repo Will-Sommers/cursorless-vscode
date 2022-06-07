@@ -16,7 +16,7 @@ import CommandRunner from "./core/commandRunner/CommandRunner";
  * - Creates an entrypoint for running commands {@link CommandRunner}.
  */
 export async function activate(context: vscode.ExtensionContext) {
-  const { getNodeAtLocation } = await getParseTreeApi();
+  const { getNodeAtLocation, getTree } = await getParseTreeApi();
   const commandServerApi = await getCommandServerApi();
 
   const graph = makeGraph({
@@ -24,6 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
     extensionContext: () => context,
     commandServerApi: () => commandServerApi,
     getNodeAtLocation: () => getNodeAtLocation,
+    getTree: () => getTree,
   } as FactoryMap<Graph>);
   graph.debug.init();
   graph.snippets.init();

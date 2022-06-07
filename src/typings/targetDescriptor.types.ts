@@ -65,50 +65,54 @@ export type SurroundingPairName =
   | SimpleSurroundingPairName
   | ComplexSurroundingPairName;
 
-export type SimpleScopeTypeType =
-  | "argumentOrParameter"
-  | "anonymousFunction"
-  | "attribute"
-  | "class"
-  | "className"
-  | "collectionItem"
-  | "collectionKey"
-  | "comment"
-  | "functionCall"
-  | "functionName"
-  | "ifStatement"
-  | "list"
-  | "map"
-  | "name"
-  | "namedFunction"
-  | "regularExpression"
-  | "statement"
-  | "string"
-  | "type"
-  | "value"
-  | "condition"
-  | "section"
-  | "sectionLevelOne"
-  | "sectionLevelTwo"
-  | "sectionLevelThree"
-  | "sectionLevelFour"
-  | "sectionLevelFive"
-  | "sectionLevelSix"
-  | "selector"
-  | "xmlBothTags"
-  | "xmlElement"
-  | "xmlEndTag"
-  | "xmlStartTag"
-  // Text based scopes
-  | "token"
-  | "line"
-  | "notebookCell"
-  | "paragraph"
-  | "document"
-  | "character"
-  | "word"
-  | "nonWhitespaceSequence"
-  | "url";
+// TODO: Move to constants file;
+export const simpleScopeTypeTypes = [
+  "argumentOrParameter",
+  "anonymousFunction",
+  "attribute",
+  "class",
+  "className",
+  "collectionItem",
+  "collectionKey",
+  "comment",
+  "functionCall",
+  "functionName",
+  "ifStatement",
+  "list",
+  "map",
+  "name",
+  "namedFunction",
+  "regularExpression",
+  "statement",
+  "string",
+  "type",
+  "value",
+  "condition",
+  "section",
+  "sectionLevelOne",
+  "sectionLevelTwo",
+  "sectionLevelThree",
+  "sectionLevelFour",
+  "sectionLevelFive",
+  "sectionLevelSix",
+  "selector",
+  "xmlBothTags",
+  "xmlElement",
+  "xmlEndTag",
+  "xmlStartTag",
+  // Text based scopes,
+  "token",
+  "line",
+  "notebookCell",
+  "paragraph",
+  "document",
+  "character",
+  "word",
+  "nonWhitespaceSequence",
+  "url",
+];
+
+export type SimpleScopeTypeType = typeof simpleScopeTypeTypes[number];
 
 export interface SimpleScopeType {
   type: SimpleScopeTypeType;

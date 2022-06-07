@@ -104,6 +104,7 @@ export default class CommandRunner {
         thatMark: this.thatMark.exists() ? this.thatMark.get() : [],
         sourceMark: this.sourceMark.exists() ? this.sourceMark.get() : [],
         getNodeAtLocation: this.graph.getNodeAtLocation,
+        getTree: this.graph.getTree,
       };
 
       if (this.graph.testCaseRecorder.isActive()) {
