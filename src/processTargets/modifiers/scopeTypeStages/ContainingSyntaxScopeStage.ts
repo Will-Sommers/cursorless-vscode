@@ -9,7 +9,10 @@ import {
   ContainingScopeModifier,
   EveryScopeModifier,
   SimpleScopeType,
-  SimpleScopeTypeType, Target
+  SimpleScopeTypeType
+} from "../../../typings/targetDescriptor.types";
+import {
+  Target
 } from "../../../typings/target.types";
 import {
   NodeMatcher,
@@ -20,7 +23,6 @@ import {
 import { selectionWithEditorFromRange } from "../../../util/selectionUtils";
 import { ModifierStage } from "../../PipelineStages.types";
 import ScopeTypeTarget from "../../targets/ScopeTypeTarget";
-} from "../../../typings/targetDescriptor.types";
 
 export interface SimpleContainingScopeModifier extends ContainingScopeModifier {
   scopeType: SimpleScopeType;
