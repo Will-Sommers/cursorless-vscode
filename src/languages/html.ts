@@ -1,5 +1,5 @@
 import { SyntaxNode, Tree } from "web-tree-sitter";
-import { SimpleScopeTypeType } from "../typings/target.types";
+import { SimpleScopeTypeType } from "../typings/targetDescriptor.types";
 import { NodeMatcherAlternative, SelectionWithEditor } from "../typings/Types";
 import {
   createPatternMatchers,

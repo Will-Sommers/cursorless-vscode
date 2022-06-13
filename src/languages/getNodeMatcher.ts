@@ -1,7 +1,7 @@
 import { intersection } from "lodash";
 import { SyntaxNode, Tree } from "web-tree-sitter";
 import { UnsupportedLanguageError } from "../errors";
-import { SimpleScopeTypeType } from "../typings/target.types";
+import { SimpleScopeTypeType } from "../typings/targetDescriptor.types";
 import {
   NodeMatcher,
   NodeMatcherValue,

@@ -3,7 +3,7 @@ import * as path from "path";
 import {
   SimpleScopeTypeType,
   simpleScopeTypeTypes,
-} from "../typings/target.types";
+} from "../typings/targetDescriptor.types";
 import { NodeMatcherAlternative } from "../typings/Types";
 import { createPatternMatchers } from "../util/nodeMatchers";
 import { defaultMatcher } from "../util/queryNodeMatchers";
